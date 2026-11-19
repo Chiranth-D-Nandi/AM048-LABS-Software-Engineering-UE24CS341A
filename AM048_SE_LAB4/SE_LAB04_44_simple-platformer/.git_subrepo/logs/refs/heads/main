@@ -1,7 +1,0 @@
-0000000000000000000000000000000000000000 140ee4ded8c827e5e3bca3bdf6cdbe1361c13b9a Chiranth D Nandi <nandi.chiranth@gmail.com> 1790833132 +0530	clone: from https://github.com/Chiranth-D-Nandi/SE_LAB04_44_simple-platformer.git
-140ee4ded8c827e5e3bca3bdf6cdbe1361c13b9a dba2d49526a4a34c58ecf166d212d6105f2c0794 Chiranth D Nandi <nandi.chiranth@gmail.com> 1790833548 +0530	commit: Task 1: Fix platform collision tunneling with swept landing check and terminal velocity
-dba2d49526a4a34c58ecf166d212d6105f2c0794 d4fe6e32b874b18a72d1be235c862d2930ce9dfc Chiranth D Nandi <nandi.chiranth@gmail.com> 1790833549 +0530	commit: Task 2: Add Game Over screen showing final score and waiting for input
-d4fe6e32b874b18a72d1be235c862d2930ce9dfc b1b165cabb2ff141b8d602662727dc7b38668369 Chiranth D Nandi <nandi.chiranth@gmail.com> 1790833549 +0530	commit: Task 3: Add replay with Easy/Medium/Hard difficulty selection or exit
-b1b165cabb2ff141b8d602662727dc7b38668369 16383bf4c488714e1661c3e9e2814f48d5cfbc74 Chiranth D Nandi <nandi.chiranth@gmail.com> 1790833550 +0530	commit: Task 4: Add jump, goal and death sound effects (synthesized, no assets)
-16383bf4c488714e1661c3e9e2814f48d5cfbc74 8747fbc26315267f68510c37442676d7121b1e57 Chiranth D Nandi <nandi.chiranth@gmail.com> 1790834567 +0530	commit: Add Lab 4 before/after videos
-8747fbc26315267f68510c37442676d7121b1e57 87123623945e649160180b3f7ca5648d89294b6d Chiranth D Nandi <nandi.chiranth@gmail.com> 1790834578 +0530	commit: Add Lab 4 chat history
