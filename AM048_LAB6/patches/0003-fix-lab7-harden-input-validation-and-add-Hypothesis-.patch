@@ -1,0 +1,186 @@
+From d36787f6ee9b5e7454b040e4bb819dbab94f5121 Mon Sep 17 00:00:00 2001
+From: Chiranth D Nandi <nandi.chiranth@gmail.com>
+Date: Thu, 12 Nov 2026 20:04:32 +0530
+Subject: [PATCH 3/5] fix(lab7): harden input validation and add Hypothesis
+ fuzz tests
+
+---
+ Lab 7/scholarship_awards.py      | 83 ++++++++++++++++++++++++++++----
+ Lab 7/test_scholarship_awards.py | 46 ++++++++++++++++++
+ 2 files changed, 120 insertions(+), 9 deletions(-)
+
+diff --git a/Lab 7/scholarship_awards.py b/Lab 7/scholarship_awards.py
+index 02c5dbd..7836264 100644
+--- a/Lab 7/scholarship_awards.py	
++++ b/Lab 7/scholarship_awards.py	
+@@ -1,31 +1,96 @@
++"""Hardened scholarship awards parser, average, and payout calculator."""
++
++import math
++
++
++def _parse_finite_nonneg_float(raw):
++    """Parse a finite non-negative float from string, or return None."""
++    if not isinstance(raw, str):
++        return None
++    stripped = raw.strip()
++    if not stripped:
++        return None
++    try:
++        value = float(stripped)
++    except (ValueError, OverflowError):
++        return None
++    if not math.isfinite(value) or value < 0.0:
++        return None
++    return value
++
++
+ def parse_applicant(text):
+-    category, marks = text.split(':')
+-    return category.strip().title(), float(marks)
++    """Parse 'category:marks' into (TitleCategory, float_marks) or None."""
++    if not isinstance(text, str):
++        return None
++    parts = text.split(":")
++    if len(parts) != 2:
++        return None
++    category = parts[0].strip()
++    if not category:
++        return None
++    normalized = category.title()
++    if not normalized.strip():
++        return None
++    marks = _parse_finite_nonneg_float(parts[1])
++    if marks is None:
++        return None
++    return normalized, marks
++
+ 
+ def marks_average(marks_csv):
+-    values = [int(r) for r in marks_csv.split(',')]
++    """Compute integer floor average of comma-separated non-negative ints."""
++    if not isinstance(marks_csv, str) or not marks_csv.strip():
++        return None
++    tokens = [part.strip() for part in marks_csv.split(",")]
++    if not tokens or any(not tok for tok in tokens):
++        return None
++    values = []
++    for tok in tokens:
++        try:
++            num = int(tok)
++        except ValueError:
++            return None
++        if num < 0:
++            return None
++        values.append(num)
+     return sum(values) // len(values)
+ 
++
+ def payable_award(text):
+-    award, deduction = text.split('|')
+-    total = float(award) * 1.18 - float(deduction)
+-    return max(total, 0)
++    """Parse 'award|deduction' and compute GST-adjusted payable award or None."""
++    if not isinstance(text, str):
++        return None
++    parts = text.split("|")
++    if len(parts) != 2:
++        return None
++    award = _parse_finite_nonneg_float(parts[0])
++    deduction = _parse_finite_nonneg_float(parts[1])
++    if award is None or deduction is None:
++        return None
++    total = award * 1.18 - deduction
++    if not math.isfinite(total):
++        return None
++    return round(max(total, 0.0), 2)
++
+ 
+ def main():
++    """Interactive demo runner for scholarship_awards utilities."""
+     print("==== Running parse_applicant ====")
+     user_input = input("Enter category:marks (e.g. merit:82): ")
+     result = parse_applicant(user_input)
+-    print("Category and Marks:", result)
++    print("Category and Marks:", result if result is not None else "Invalid input")
+ 
+     print("\n==== Running marks_average ====")
+     user_input = input("Enter marks as CSV (e.g. 72,85,90): ")
+     result = marks_average(user_input)
+-    print("Average Marks:", result)
++    print("Average Marks:", result if result is not None else "Invalid input")
+ 
+     print("\n==== Running payable_award ====")
+     user_input = input("Enter award|deduction (e.g. 5000|500): ")
+     result = payable_award(user_input)
+-    print("Payable Award:", result)
++    print("Payable Award:", result if result is not None else "Invalid input")
++
+ 
+ if __name__ == "__main__":
+     main()
+diff --git a/Lab 7/test_scholarship_awards.py b/Lab 7/test_scholarship_awards.py
+index 2fa11cc..ff3b7a4 100644
+--- a/Lab 7/test_scholarship_awards.py	
++++ b/Lab 7/test_scholarship_awards.py	
+@@ -1,11 +1,57 @@
++"""Property-based fuzz tests (Hypothesis) and edge-case tests for Lab 7."""
++
++import math
+ from hypothesis import given, strategies as st
+ from scholarship_awards import parse_applicant, marks_average, payable_award
+ 
++
+ @given(st.text() | st.none())
+ def test_parse_applicant_no_crash(s):
++    try:
++        res = parse_applicant(s)
++    except Exception as exc:  # pragma: no cover - fuzz failure path
++        raise AssertionError(f"parse_applicant crashed on {s!r}: {exc}") from exc
++    if res is not None:
++        assert isinstance(res, tuple) and len(res) == 2
++        category, marks = res
++        assert isinstance(category, str) and len(category.strip()) > 0
++        assert isinstance(marks, float) and math.isfinite(marks) and marks >= 0
++
+ 
+ @given(st.text() | st.none())
+ def test_marks_average_no_crash(s):
++    try:
++        res = marks_average(s)
++    except Exception as exc:  # pragma: no cover - fuzz failure path
++        raise AssertionError(f"marks_average crashed on {s!r}: {exc}") from exc
++    if res is not None:
++        assert isinstance(res, int) and not isinstance(res, bool) and res >= 0
++
+ 
+ @given(st.text() | st.none())
+ def test_payable_award_no_crash(s):
++    try:
++        res = payable_award(s)
++    except Exception as exc:  # pragma: no cover - fuzz failure path
++        raise AssertionError(f"payable_award crashed on {s!r}: {exc}") from exc
++    if res is not None:
++        assert isinstance(res, (int, float)) and not isinstance(res, bool)
++        assert math.isfinite(res) and res >= 0
++
++
++def test_valid_happy_paths():
++    assert parse_applicant("merit:82") == ("Merit", 82.0)
++    assert marks_average("72,85,90") == 82
++    assert payable_award("5000|500") == 5400.0
++    assert payable_award("100|500") == 0
++
++
++def test_malformed_and_edge_cases():
++    for bad in [None, "", "   ", "merit", "a:b:c", ":82", "merit:nan", "merit:inf", "merit:-10"]:
++        assert parse_applicant(bad) is None
++
++    for bad in [None, "", "   ", "1,,3", "one,two", "10,-5"]:
++        assert marks_average(bad) is None
++
++    for bad in [None, "", "   ", "5000", "1|2|3", "nan|0", "inf|0", "-100|50", "100|-50", "1.7e308|0"]:
++        assert payable_award(bad) is None
+-- 
+2.51.2.windows.1
+

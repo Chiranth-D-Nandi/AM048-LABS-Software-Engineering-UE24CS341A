@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 49e763f20d58c14f27d451f95c75ee996fa18af6 Chiranth D Nandi <nandi.chiranth@gmail.com> 1794403310 +0530	clone: from https://github.com/SETAPESU26/L5_44_employee_payroll_system
+49e763f20d58c14f27d451f95c75ee996fa18af6 4d2925fedb20f8190a3ccf1fabeb49a03350b8f1 Chiranth D Nandi <nandi.chiranth@gmail.com> 1794403561 +0530	commit: fix(security): resolve all Bandit security findings and secret exposure
+4d2925fedb20f8190a3ccf1fabeb49a03350b8f1 ce85c48bbb4038890f976c94cc878ae08bfef077 Chiranth D Nandi <nandi.chiranth@gmail.com> 1794403701 +0530	commit: fix(quality): resolve Pylint issues and achieve 10.00/10 score
+ce85c48bbb4038890f976c94cc878ae08bfef077 4437b4250fa2f7bafdef503bcf00db1e30a2e428 Chiranth D Nandi <nandi.chiranth@gmail.com> 1794403821 +0530	commit: style(flake8): fix PEP 8 line lengths and add issues and reflection deliverables

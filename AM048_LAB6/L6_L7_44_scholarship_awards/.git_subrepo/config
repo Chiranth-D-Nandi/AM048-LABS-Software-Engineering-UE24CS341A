@@ -1,0 +1,16 @@
+[core]
+	repositoryformatversion = 0
+	filemode = false
+	bare = false
+	logallrefupdates = true
+	symlinks = false
+	ignorecase = true
+[remote "origin"]
+	url = https://github.com/SETAPESU26/L6_L7_44_scholarship_awards
+	fetch = +refs/heads/*:refs/remotes/origin/*
+[branch "main"]
+	remote = origin
+	merge = refs/heads/main
+[remote "myfork"]
+	url = https://github.com/Chiranth-D-Nandi/L6_L7_44_scholarship_awards.git
+	fetch = +refs/heads/*:refs/remotes/myfork/*

@@ -1,0 +1,185 @@
+From 4437b4250fa2f7bafdef503bcf00db1e30a2e428 Mon Sep 17 00:00:00 2001
+From: Chiranth D Nandi <nandi.chiranth@gmail.com>
+Date: Wed, 11 Nov 2026 19:00:21 +0530
+Subject: [PATCH 3/3] style(flake8): fix PEP 8 line lengths and add issues and
+ reflection deliverables
+
+---
+ employee_payroll_system.py | 46 +++++++++++++++++++++-----------------
+ issues.md                  | 19 ++++++++++++++++
+ reflection.md              | 25 +++++++++++++++++++++
+ 3 files changed, 70 insertions(+), 20 deletions(-)
+ create mode 100644 issues.md
+ create mode 100644 reflection.md
+
+diff --git a/employee_payroll_system.py b/employee_payroll_system.py
+index bda8688..4be1759 100644
+--- a/employee_payroll_system.py
++++ b/employee_payroll_system.py
+@@ -26,23 +26,24 @@ _UNARY_OPS = {
+ }
+ 
+ 
++def _is_number(value):
++    """Return True for int or float values, excluding booleans."""
++    return isinstance(value, (int, float)) and not isinstance(value, bool)
++
++
+ def _is_valid_amount(value):
+-    """Return True if value is a finite non-negative number (excluding bool)."""
+-    return (
+-        isinstance(value, (int, float))
+-        and not isinstance(value, bool)
+-        and 0 <= value < float("inf")
+-    )
++    """Return True if value is finite and non-negative (not bool)."""
++    return _is_number(value) and 0 <= value < float("inf")
+ 
+ 
+ def _eval_ast_node(node, variables):
+-    """Safely evaluate restricted arithmetic AST nodes against allowed variables."""
++    """Evaluate restricted AST arithmetic nodes with allowed vars."""
+     if isinstance(node, ast.Expression):
+         return _eval_ast_node(node.body, variables)
+     if isinstance(node, ast.Constant):
+-        if isinstance(node.value, (int, float)) and not isinstance(node.value, bool):
++        if _is_number(node.value):
+             return float(node.value)
+-        raise ValueError(f"Unsupported constant in expression: {node.value!r}")
++        raise ValueError(f"Unsupported constant: {node.value!r}")
+     if isinstance(node, ast.Name) and node.id in variables:
+         return float(variables[node.id])
+     if isinstance(node, ast.BinOp) and type(node.op) in _BINARY_OPS:
+@@ -52,23 +53,26 @@ def _eval_ast_node(node, variables):
+             raise ValueError("Division by zero in deduction expression")
+         return _BINARY_OPS[type(node.op)](left, right)
+     if isinstance(node, ast.UnaryOp) and type(node.op) in _UNARY_OPS:
+-        return _UNARY_OPS[type(node.op)](_eval_ast_node(node.operand, variables))
++        operand = _eval_ast_node(node.operand, variables)
++        return _UNARY_OPS[type(node.op)](operand)
+     raise ValueError(f"Unsupported expression node: {ast.dump(node)}")
+ 
+ 
+ def process_salary(emp_id, bonus, transaction_logs=None):
+-    """Credit a non-negative bonus to an employee and append an audit log entry."""
++    """Credit a non-negative bonus and record an audit log entry."""
+     if transaction_logs is None:
+         transaction_logs = []
+     if emp_id not in payroll_records or not _is_valid_amount(bonus):
+         return False
+     payroll_records[emp_id]["base_salary"] += bonus
+-    transaction_logs.append(f"Credited bonus {bonus:g} to employee id {emp_id}")
++    transaction_logs.append(
++        f"Credited bonus {bonus:g} to employee id {emp_id}"
++    )
+     return True
+ 
+ 
+ def deduct_penalty(emp_id, penalty):
+-    """Deduct a valid disciplinary penalty from an employee base salary if sufficient."""
++    """Deduct a valid penalty from base salary when funds suffice."""
+     if emp_id not in payroll_records or not _is_valid_amount(penalty):
+         return False
+     if penalty > payroll_records[emp_id]["base_salary"]:
+@@ -78,7 +82,7 @@ def deduct_penalty(emp_id, penalty):
+ 
+ 
+ def check_bonus_eligibility(emp_id, min_base=4000.0):
+-    """Return True if employee exists and base_salary meets min_base threshold."""
++    """Return True if employee exists and meets min_base salary."""
+     record = payroll_records.get(emp_id)
+     if record is None:
+         return False
+@@ -86,17 +90,19 @@ def check_bonus_eligibility(emp_id, min_base=4000.0):
+ 
+ 
+ def compute_net_salary(emp_id, deduction_expr):
+-    """Compute employee net salary using a safely parsed arithmetic expression."""
++    """Compute net salary using a safely parsed arithmetic expression."""
+     if emp_id not in payroll_records:
+         raise KeyError(f"Unknown employee id: {emp_id}")
+     record = payroll_records[emp_id]
+-    base = record["base_salary"]
+-    if isinstance(deduction_expr, (int, float)) and not isinstance(deduction_expr, bool):
++    if _is_number(deduction_expr):
+         return float(deduction_expr)
+     if not isinstance(deduction_expr, str):
+-        raise ValueError("deduction_expr must be a string arithmetic expression")
++        raise ValueError(
++            "deduction_expr must be a string arithmetic expression"
++        )
+     tree = ast.parse(deduction_expr, mode="eval")
+-    return _eval_ast_node(tree, {"base": base, "tax_rate": record["tax_rate"]})
++    variables = {"base": record["base_salary"], "tax_rate": record["tax_rate"]}
++    return _eval_ast_node(tree, variables)
+ 
+ 
+ def generate_employee_hash(emp_id):
+@@ -105,7 +111,7 @@ def generate_employee_hash(emp_id):
+ 
+ 
+ def generate_payroll_token():
+-    """Generate a cryptographically random 4-digit payroll verification token."""
++    """Generate a cryptographically random 4-digit payroll token."""
+     return 1000 + secrets.randbelow(9000)
+ 
+ 
+diff --git a/issues.md b/issues.md
+new file mode 100644
+index 0000000..58b6c4a
+--- /dev/null
++++ b/issues.md
+@@ -0,0 +1,19 @@
++# Static Code Analysis & Remediation Issues Log
++
++Repository: `L5_44_employee_payroll_system`
++Target File: `employee_payroll_system.py`
++
++| Issue | Type | Line(s) | Description | Fix Approach |
++| :--- | :--- | :--- | :--- | :--- |
++| Command Injection via `os.system` (`B605`) | Security (High) | 58 | `export_payroll_sheet()` invoked `os.system(f"echo Payroll summary exported to: {filename}")`, allowing shell command injection if `filename` contains shell metacharacters. | Removed `os.system()` and printed the export confirmation directly with Python `print()`. |
++| Weak Hash Algorithm MD5 (`B324`) | Security (High) | 47 | `generate_employee_hash()` used `hashlib.md5()`, which is cryptographically broken and susceptible to collision attacks. | Replaced `hashlib.md5` with `hashlib.sha256` using explicit UTF-8 encoding. |
++| Hardcoded Payroll Key & Secret Exposure | Security / Logic (High, Manual) | 62, 70 | A master credential (`"HR_PAYROLL_MASTER_SECRET_2026"`) was hardcoded in source and printed in plaintext to standard output. | Removed the hardcoded literal; load `PAYROLL_KEY` via `os.environ.get("PAYROLL_KEY")` and print only a boolean configuration status (`"configured"` / `"not set"`). |
++| Arbitrary Code Execution via `eval()` (`B307`, `W0123`) | Security (Medium) | 42 | `compute_net_salary()` evaluated `deduction_expr` directly with `eval()`, permitting arbitrary Python execution, and left `base` unused (`W0612`, `F841`). | Replaced `eval()` with `ast.parse(..., mode="eval")` and a strict recursive AST evaluator (`_eval_ast_node`) permitting only numeric constants, safe variable names (`base`, `tax_rate`), unary `+`/`-`, and binary `+`/`-`/`*`/`/` (guarding division by zero). |
++| Insecure PRNG for Payroll Token (`B311`) | Security (Low) | 51 | `generate_payroll_token()` used `random.randint(1000, 9999)`, which uses Mersenne Twister and is predictable. | Replaced `random.randint` with cryptographically secure `1000 + secrets.randbelow(9000)`. |
++| Silent Broad Exception Swallowing (`B110`, `W0702`, `E722`) | Security / Bug (Low) | 26 | `deduct_penalty()` wrapped subtraction in `except: pass`, hiding errors like `TypeError`, `KeyError`, or `None` access instead of handling invalid inputs. | Removed `try/except: pass`; validated `emp_id` membership, validated `penalty` via `_is_valid_amount()`, checked sufficient balance (`penalty <= base_salary`), and returned `False` cleanly. |
++| Missing Negative / Type Validation on Bonus & Penalty | Logic / Integrity (Medium, Manual) | 15-28 | `process_salary()` and `deduct_penalty()` did not validate amounts: negative `penalty` increased salary, negative `bonus` decreased salary, and booleans/non-finite floats passed type checks. | Added shared `_is_number()` and `_is_valid_amount()` helpers rejecting `bool`, negative numbers, `NaN`, and `inf`, and rejecting penalties exceeding `base_salary`. |
++| Mutable Default Argument (`W0102`) | Bug / Quality | 15 | `processSalary(emp_id, bonus, transaction_logs=[])` reused a single shared list across calls when omitted. | Changed default to `transaction_logs=None` and initialized `transaction_logs = []` inside the function body. |
++| `== None` Singleton Comparison & Redundant `if/else` (`C0121`, `E711`, `R1703`, `R1705`) | Code Quality / Style | 32-37 | `check_bonus_eligibility()` checked `emp == None`, unnecessarily used `if ...: return True else: return False`, and assigned unused `statutory_buffer = 0.0` (`W0612`, `F841`). | Used `payroll_records.get(emp_id)`, checked `if record is None:`, removed unused `statutory_buffer`, and directly returned `record["base_salary"] >= min_base`. |
++| File Handle Resource Leak & Missing Encoding (`R1732`, `W1514`) | Bug / Resource | 55 | `open(filename, "w")` lacked explicit encoding and context manager, risking unclosed file descriptors on write failure. | Switched to `with open(filename, "w", encoding="utf-8") as payroll_file:` writing formatted JSON safely. |
++| Side Effects on Module Import | Logic / Bug (Manual) | 73 | Top-level `main()` executed unconditionally when importing `employee_payroll_system` for testing or reuse. | Wrapped `main()` execution in `if __name__ == "__main__":`. |
++| Unused Import & Legacy Formatting (`W0611`, `F401`, `C0103`, `C0209`, `C0116`, `E501`, `C0304`, `W292`) | Style / Maintainability | 6, 15, 19, 73 | Unused `import math`, camelCase `processSalary`, `%`-formatting, missing module/function docstrings, lines > 79 chars (`E501`), and missing trailing newline (`C0304`/`W292`). | Removed unused `math`, renamed `process_salary`, used f-strings, added docstrings everywhere, wrapped all lines to <= 79 chars for PEP 8 / Flake8 compliance, and added a final newline. |
+diff --git a/reflection.md b/reflection.md
+new file mode 100644
+index 0000000..89d853d
+--- /dev/null
++++ b/reflection.md
+@@ -0,0 +1,25 @@
++# Lab 5 Reflection — Static Code Analysis
++
++## 1. Roles of Bandit, Pylint, and Flake8 (and Why All Three Matter)
++Each static analysis tool targets a distinct quality dimension:
++- **Bandit** scans the Python Abstract Syntax Tree (AST) specifically for security vulnerabilities (CWE patterns) such as shell command injection (`B605`), dynamic code execution (`B307`), weak hashes (`B324`), predictable PRNGs (`B311`), and swallowed exceptions (`B110`).
++- **Pylint** evaluates deeper code quality, semantic bugs, design smells, and maintainability (mutable default arguments `W0102`, leaked file handles `R1732`, unspecified file encoding `W1514`, unused variables `W0612`, naming conventions `C0103`, missing docstrings `C0116`), producing an overall score out of 10.
++- **Flake8** enforces strict PEP 8 formatting consistency and fast syntax/lint checks (`E501` <= 79-character lines, `F401` unused imports, `E711` `is None`, `W292` trailing newline).
++
++Using only one tool leaves blind spots: Flake8 passes code that calls `eval()` or `hashlib.md5()`, while Bandit passes code with mutable default lists or missing docstrings.
++
++## 2. Addressing High-Severity Security & Reliability Risks First
++Fixing Bandit's High and Medium findings first eliminated the most severe attack vectors before refactoring code structure:
++- Removing `os.system(...)` (`B605`) prevented arbitrary OS shell execution from untrusted filenames.
++- Replacing `eval(deduction_expr)` (`B307`) with `ast.parse(..., mode="eval")` and an explicit AST allowlist (`_eval_ast_node`) preserved arithmetic payroll formulas like `"base * 0.85"` while blocking code injection such as `__import__("os")`.
++- Upgrading MD5 (`B324`) to SHA-256 and `random.randint` (`B311`) to `secrets.randbelow` eliminated weak cryptographic primitives.
++- Replacing bare `except: pass` (`B110`/`W0702`) exposed real error states instead of silently ignoring failures.
++
++## 3. Issues Static Analysis Missed (Detected Through Manual & Runtime Inspection)
++Static tools operate largely syntactically and cannot infer domain invariants or deployment intent:
++- **Hardcoded secret & stdout exposure**: `payroll_key = "HR_PAYROLL_MASTER_SECRET_2026"` used a non-standard variable name that Bandit's hardcoded-password check missed, and `print("Payroll key loaded:", payroll_key)` leaked credentials to logs. Moving to `os.environ.get("PAYROLL_KEY")` and logging only `"configured"` / `"not set"` eliminated secret leakage.
++- **Domain logic bugs on amounts**: No static analyzer flagged that `deduct_penalty("EMP102", -500)` would *increase* an employee's salary or exceed `base_salary`. Adding `_is_valid_amount()` (rejecting negatives, `NaN`, `inf`, and `bool`) enforced domain integrity.
++- **Import-time execution**: Calling `main()` unconditionally at module bottom caused payroll mutations and file writes during simple `import` statements; adding `if __name__ == "__main__":` fixed module testability.
++
++## 4. Limitations of Static Analysis and Practical Workflow Integration
++Static analysis flags syntactic patterns without executing business workflows or guaranteeing functional correctness—over-zealous fixes can break runtime behavior unless backed by tests, and rules like `unused variable` do not reveal whether a variable (`statutory_buffer`) indicates an unimplemented requirement. Conversely, enforcing PEP 8 line limits and docstrings improves reviewability across team commits. In real engineering workflows, running **Bandit**, **Pylint** (with a minimum score gate such as >= 9.5), **Flake8**, and unit tests automatically inside pre-commit hooks and CI pull-request checks catches security regressions and quality drift before code reaches production.
+-- 
+2.51.2.windows.1
+

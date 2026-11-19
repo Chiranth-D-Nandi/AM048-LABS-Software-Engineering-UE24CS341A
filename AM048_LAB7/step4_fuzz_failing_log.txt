@@ -1,0 +1,189 @@
+======================================= test session starts =======================================
+platform win32 -- Python 3.13.5, pytest-9.2.0, pluggy-1.7.0
+rootdir: C:\Users\chiranth\Downloads\SE_Eval\AM048_LAB6\L6_L7_44_scholarship_awards\Lab 7
+plugins: anyio-4.13.0, hypothesis-6.170.15, langsmith-0.14.13, locust-2.47.0, asyncio-1.4.1
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 5 items
+
+test_scholarship_awards.py FFF.F                                                             [100%]
+
+============================================ FAILURES =============================================
+__________________________________ test_parse_applicant_no_crash __________________________________
+  + Exception Group Traceback (most recent call last):
+  |   File "C:\Users\chiranth\Downloads\SE_Eval\AM048_LAB6\L6_L7_44_scholarship_awards\Lab 7\test_scholarship_awards.py", line 9, in test_parse_applicant_no_crash
+  |     def test_parse_applicant_no_crash(s):
+  |                    ^^^
+  | ExceptionGroup: Hypothesis found 3 distinct failures. (3 sub-exceptions)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\chiranth\Downloads\SE_Eval\AM048_LAB6\L6_L7_44_scholarship_awards\Lab 7\test_scholarship_awards.py", line 11, in test_parse_applicant_no_crash
+    |     res = parse_applicant(s)
+    |   File "C:\Users\chiranth\Downloads\SE_Eval\AM048_LAB6\L6_L7_44_scholarship_awards\Lab 7\scholarship_awards.py", line 3, in parse_applicant
+    |     return category.strip().title(), float(marks)
+    |                                      ~~~~~^^^^^^^
+    | ValueError: could not convert string to float: ''
+    | 
+    | The above exception was the direct cause of the following exception:
+    | 
+    | Traceback (most recent call last):
+    |   File "C:\Users\chiranth\Downloads\SE_Eval\AM048_LAB6\L6_L7_44_scholarship_awards\Lab 7\test_scholarship_awards.py", line 13, in test_parse_applicant_no_crash
+    |     raise AssertionError(f"parse_applicant crashed on {s!r}: {exc}") from exc
+    | AssertionError: parse_applicant crashed on ':': could not convert string to float: ''
+    | Failing test case: test_parse_applicant_no_crash(
+    |     s=':',
+    | )
+    +---------------- 2 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\chiranth\Downloads\SE_Eval\AM048_LAB6\L6_L7_44_scholarship_awards\Lab 7\test_scholarship_awards.py", line 11, in test_parse_applicant_no_crash
+    |     res = parse_applicant(s)
+    |   File "C:\Users\chiranth\Downloads\SE_Eval\AM048_LAB6\L6_L7_44_scholarship_awards\Lab 7\scholarship_awards.py", line 2, in parse_applicant
+    |     category, marks = text.split(':')
+    |     ^^^^^^^^^^^^^^^
+    | ValueError: not enough values to unpack (expected 2, got 1)
+    | 
+    | The above exception was the direct cause of the following exception:
+    | 
+    | Traceback (most recent call last):
+    |   File "C:\Users\chiranth\Downloads\SE_Eval\AM048_LAB6\L6_L7_44_scholarship_awards\Lab 7\test_scholarship_awards.py", line 13, in test_parse_applicant_no_crash
+    |     raise AssertionError(f"parse_applicant crashed on {s!r}: {exc}") from exc
+    | AssertionError: parse_applicant crashed on '': not enough values to unpack (expected 2, got 1)
+    | Failing test case: test_parse_applicant_no_crash(
+    |     s='',  # or any other generated value
+    | )
+    +---------------- 3 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\chiranth\Downloads\SE_Eval\AM048_LAB6\L6_L7_44_scholarship_awards\Lab 7\test_scholarship_awards.py", line 11, in test_parse_applicant_no_crash
+    |     res = parse_applicant(s)
+    |   File "C:\Users\chiranth\Downloads\SE_Eval\AM048_LAB6\L6_L7_44_scholarship_awards\Lab 7\scholarship_awards.py", line 2, in parse_applicant
+    |     category, marks = text.split(':')
+    |                       ^^^^^^^^^^
+    | AttributeError: 'NoneType' object has no attribute 'split'
+    | 
+    | The above exception was the direct cause of the following exception:
+    | 
+    | Traceback (most recent call last):
+    |   File "C:\Users\chiranth\Downloads\SE_Eval\AM048_LAB6\L6_L7_44_scholarship_awards\Lab 7\test_scholarship_awards.py", line 13, in test_parse_applicant_no_crash
+    |     raise AssertionError(f"parse_applicant crashed on {s!r}: {exc}") from exc
+    | AssertionError: parse_applicant crashed on None: 'NoneType' object has no attribute 'split'
+    | Failing test case: test_parse_applicant_no_crash(
+    |     s=None,  # or any other generated value
+    | )
+    +------------------------------------
+___________________________________ test_marks_average_no_crash ___________________________________
+  + Exception Group Traceback (most recent call last):
+  |   File "C:\Users\chiranth\Downloads\SE_Eval\AM048_LAB6\L6_L7_44_scholarship_awards\Lab 7\test_scholarship_awards.py", line 22, in test_marks_average_no_crash
+  |     def test_marks_average_no_crash(s):
+  |                    ^^^
+  | ExceptionGroup: Hypothesis found 2 distinct failures. (2 sub-exceptions)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\chiranth\Downloads\SE_Eval\AM048_LAB6\L6_L7_44_scholarship_awards\Lab 7\test_scholarship_awards.py", line 24, in test_marks_average_no_crash
+    |     res = marks_average(s)
+    |   File "C:\Users\chiranth\Downloads\SE_Eval\AM048_LAB6\L6_L7_44_scholarship_awards\Lab 7\scholarship_awards.py", line 6, in marks_average
+    |     values = [int(r) for r in marks_csv.split(',')]
+    |               ~~~^^^
+    | ValueError: invalid literal for int() with base 10: ''
+    | 
+    | The above exception was the direct cause of the following exception:
+    | 
+    | Traceback (most recent call last):
+    |   File "C:\Users\chiranth\Downloads\SE_Eval\AM048_LAB6\L6_L7_44_scholarship_awards\Lab 7\test_scholarship_awards.py", line 26, in test_marks_average_no_crash
+    |     raise AssertionError(f"marks_average crashed on {s!r}: {exc}") from exc
+    | AssertionError: marks_average crashed on '': invalid literal for int() with base 10: ''
+    | Failing test case: test_marks_average_no_crash(
+    |     s='',  # or any other generated value
+    | )
+    +---------------- 2 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\chiranth\Downloads\SE_Eval\AM048_LAB6\L6_L7_44_scholarship_awards\Lab 7\test_scholarship_awards.py", line 24, in test_marks_average_no_crash
+    |     res = marks_average(s)
+    |   File "C:\Users\chiranth\Downloads\SE_Eval\AM048_LAB6\L6_L7_44_scholarship_awards\Lab 7\scholarship_awards.py", line 6, in marks_average
+    |     values = [int(r) for r in marks_csv.split(',')]
+    |                               ^^^^^^^^^^^^^^^
+    | AttributeError: 'NoneType' object has no attribute 'split'
+    | 
+    | The above exception was the direct cause of the following exception:
+    | 
+    | Traceback (most recent call last):
+    |   File "C:\Users\chiranth\Downloads\SE_Eval\AM048_LAB6\L6_L7_44_scholarship_awards\Lab 7\test_scholarship_awards.py", line 26, in test_marks_average_no_crash
+    |     raise AssertionError(f"marks_average crashed on {s!r}: {exc}") from exc
+    | AssertionError: marks_average crashed on None: 'NoneType' object has no attribute 'split'
+    | Failing test case: test_marks_average_no_crash(
+    |     s=None,  # or any other generated value
+    | )
+    +------------------------------------
+___________________________________ test_payable_award_no_crash ___________________________________
+  + Exception Group Traceback (most recent call last):
+  |   File "C:\Users\chiranth\Downloads\SE_Eval\AM048_LAB6\L6_L7_44_scholarship_awards\Lab 7\test_scholarship_awards.py", line 32, in test_payable_award_no_crash
+  |     def test_payable_award_no_crash(s):
+  |                    ^^^
+  | ExceptionGroup: Hypothesis found 3 distinct failures. (3 sub-exceptions)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\chiranth\Downloads\SE_Eval\AM048_LAB6\L6_L7_44_scholarship_awards\Lab 7\test_scholarship_awards.py", line 34, in test_payable_award_no_crash
+    |     res = payable_award(s)
+    |   File "C:\Users\chiranth\Downloads\SE_Eval\AM048_LAB6\L6_L7_44_scholarship_awards\Lab 7\scholarship_awards.py", line 11, in payable_award
+    |     total = float(award) * 1.18 - float(deduction)
+    |             ~~~~~^^^^^^^
+    | ValueError: could not convert string to float: ''
+    | 
+    | The above exception was the direct cause of the following exception:
+    | 
+    | Traceback (most recent call last):
+    |   File "C:\Users\chiranth\Downloads\SE_Eval\AM048_LAB6\L6_L7_44_scholarship_awards\Lab 7\test_scholarship_awards.py", line 36, in test_payable_award_no_crash
+    |     raise AssertionError(f"payable_award crashed on {s!r}: {exc}") from exc
+    | AssertionError: payable_award crashed on '|': could not convert string to float: ''
+    | Failing test case: test_payable_award_no_crash(
+    |     s='|',
+    | )
+    +---------------- 2 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\chiranth\Downloads\SE_Eval\AM048_LAB6\L6_L7_44_scholarship_awards\Lab 7\test_scholarship_awards.py", line 34, in test_payable_award_no_crash
+    |     res = payable_award(s)
+    |   File "C:\Users\chiranth\Downloads\SE_Eval\AM048_LAB6\L6_L7_44_scholarship_awards\Lab 7\scholarship_awards.py", line 10, in payable_award
+    |     award, deduction = text.split('|')
+    |     ^^^^^^^^^^^^^^^^
+    | ValueError: not enough values to unpack (expected 2, got 1)
+    | 
+    | The above exception was the direct cause of the following exception:
+    | 
+    | Traceback (most recent call last):
+    |   File "C:\Users\chiranth\Downloads\SE_Eval\AM048_LAB6\L6_L7_44_scholarship_awards\Lab 7\test_scholarship_awards.py", line 36, in test_payable_award_no_crash
+    |     raise AssertionError(f"payable_award crashed on {s!r}: {exc}") from exc
+    | AssertionError: payable_award crashed on '': not enough values to unpack (expected 2, got 1)
+    | Failing test case: test_payable_award_no_crash(
+    |     s='',  # or any other generated value
+    | )
+    +---------------- 3 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\chiranth\Downloads\SE_Eval\AM048_LAB6\L6_L7_44_scholarship_awards\Lab 7\test_scholarship_awards.py", line 34, in test_payable_award_no_crash
+    |     res = payable_award(s)
+    |   File "C:\Users\chiranth\Downloads\SE_Eval\AM048_LAB6\L6_L7_44_scholarship_awards\Lab 7\scholarship_awards.py", line 10, in payable_award
+    |     award, deduction = text.split('|')
+    |                        ^^^^^^^^^^
+    | AttributeError: 'NoneType' object has no attribute 'split'
+    | 
+    | The above exception was the direct cause of the following exception:
+    | 
+    | Traceback (most recent call last):
+    |   File "C:\Users\chiranth\Downloads\SE_Eval\AM048_LAB6\L6_L7_44_scholarship_awards\Lab 7\test_scholarship_awards.py", line 36, in test_payable_award_no_crash
+    |     raise AssertionError(f"payable_award crashed on {s!r}: {exc}") from exc
+    | AssertionError: payable_award crashed on None: 'NoneType' object has no attribute 'split'
+    | Failing test case: test_payable_award_no_crash(
+    |     s=None,  # or any other generated value
+    | )
+    +------------------------------------
+__________________________________ test_malformed_and_edge_cases __________________________________
+test_scholarship_awards.py:51: in test_malformed_and_edge_cases
+    assert parse_applicant(bad) is None
+           ^^^^^^^^^^^^^^^^^^^^
+scholarship_awards.py:2: in parse_applicant
+    category, marks = text.split(':')
+                      ^^^^^^^^^^
+E   AttributeError: 'NoneType' object has no attribute 'split'
+===================================== short test summary info =====================================
+FAILED test_scholarship_awards.py::test_parse_applicant_no_crash - ExceptionGroup: Hypothesis fou...
+FAILED test_scholarship_awards.py::test_marks_average_no_crash - ExceptionGroup: Hypothesis found...
+FAILED test_scholarship_awards.py::test_payable_award_no_crash - ExceptionGroup: Hypothesis found...
+FAILED test_scholarship_awards.py::test_malformed_and_edge_cases - AttributeError: 'NoneType' obj...
+=================================== 4 failed, 1 passed in 7.22s ===================================

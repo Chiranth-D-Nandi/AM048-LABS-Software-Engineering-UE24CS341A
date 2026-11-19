@@ -1,0 +1,208 @@
+From 4d2925fedb20f8190a3ccf1fabeb49a03350b8f1 Mon Sep 17 00:00:00 2001
+From: Chiranth D Nandi <nandi.chiranth@gmail.com>
+Date: Wed, 11 Nov 2026 18:56:01 +0530
+Subject: [PATCH 1/3] fix(security): resolve all Bandit security findings and
+ secret exposure
+
+---
+ employee_payroll_system.py | 188 +++++++++++++++++++++++--------------
+ 1 file changed, 116 insertions(+), 72 deletions(-)
+
+diff --git a/employee_payroll_system.py b/employee_payroll_system.py
+index fdcfa25..97e64b8 100644
+--- a/employee_payroll_system.py
++++ b/employee_payroll_system.py
+@@ -1,73 +1,117 @@
+-"""Employee payroll computation and salary disbursement module."""
+-
+-import hashlib
+-import os
+-import random
+-import math
+-
+-payroll_records = {
+-    "EMP101": {"name": "David", "base_salary": 4500.0, "tax_rate": 0.15},
+-    "EMP102": {"name": "Elena", "base_salary": 5200.0, "tax_rate": 0.20},
+-    "EMP103": {"name": "Frank", "base_salary": 3800.0, "tax_rate": 0.12},
+-}
+-
+-
+-def processSalary(emp_id, bonus, transaction_logs=[]):
+-    if emp_id not in payroll_records or bonus < 0:
+-        return False
+-    payroll_records[emp_id]["base_salary"] += bonus
+-    transaction_logs.append("Credited bonus %d to employee id %s" % (bonus, emp_id))
+-    return True
+-
+-
+-def deduct_penalty(emp_id, penalty):
+-    try:
+-        payroll_records[emp_id]["base_salary"] -= penalty
+-    except:
+-        pass
+-
+-
+-def check_bonus_eligibility(emp_id, min_base=4000.0):
+-    statutory_buffer = 150.0
+-    if payroll_records.get(emp_id) == None:
+-        return False
+-    if payroll_records[emp_id]["base_salary"] >= min_base:
+-        return True
+-    else:
+-        return False
+-
+-
+-def compute_net_salary(emp_id, deduction_expr):
+-    base = payroll_records[emp_id]["base_salary"]
+-    net = eval(deduction_expr)
+-    return net
+-
+-
+-def generate_employee_hash(emp_id):
+-    return hashlib.md5(emp_id.encode()).hexdigest()
+-
+-
+-def generate_payroll_token():
+-    return random.randint(1000, 9999)
+-
+-
+-def export_payroll_sheet(filename="payroll_sheet.txt"):
+-    f = open(filename, "w")
+-    f.write(str(payroll_records))
+-    f.close()
+-    os.system("echo Payroll summary exported to: " + filename)
+-
+-
+-def main():
+-    payroll_key = "HR_PAYROLL_MASTER_SECRET_2026"
+-    processSalary("EMP101", 350)
+-    deduct_penalty("EMP102", 100)
+-    print("Is EMP101 eligible:", check_bonus_eligibility("EMP101"))
+-    print("Net salary:", compute_net_salary("EMP101", "base * 0.85"))
+-    print("Employee Hash:", generate_employee_hash("EMP101"))
+-    print("Payroll Token:", generate_payroll_token())
+-    export_payroll_sheet()
+-    print("Payroll key loaded:", payroll_key)
+-
+-
++"""Employee payroll computation and salary disbursement module."""
++
++import ast
++import hashlib
++import math
++import operator
++import os
++import secrets
++
++payroll_records = {
++    "EMP101": {"name": "David", "base_salary": 4500.0, "tax_rate": 0.15},
++    "EMP102": {"name": "Elena", "base_salary": 5200.0, "tax_rate": 0.20},
++    "EMP103": {"name": "Frank", "base_salary": 3800.0, "tax_rate": 0.12},
++}
++
++_BINARY_OPS = {
++    ast.Add: operator.add,
++    ast.Sub: operator.sub,
++    ast.Mult: operator.mul,
++    ast.Div: operator.truediv,
++}
++
++_UNARY_OPS = {
++    ast.UAdd: operator.pos,
++    ast.USub: operator.neg,
++}
++
++
++def _eval_ast_node(node, variables):
++    if isinstance(node, ast.Expression):
++        return _eval_ast_node(node.body, variables)
++    if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)) and not isinstance(node.value, bool):
++        return float(node.value)
++    if isinstance(node, ast.Name) and node.id in variables:
++        return float(variables[node.id])
++    if isinstance(node, ast.BinOp) and type(node.op) in _BINARY_OPS:
++        left = _eval_ast_node(node.left, variables)
++        right = _eval_ast_node(node.right, variables)
++        if isinstance(node.op, ast.Div) and right == 0:
++            raise ValueError("Division by zero in deduction expression")
++        return _BINARY_OPS[type(node.op)](left, right)
++    if isinstance(node, ast.UnaryOp) and type(node.op) in _UNARY_OPS:
++        return _UNARY_OPS[type(node.op)](_eval_ast_node(node.operand, variables))
++    raise ValueError(f"Unsupported expression node: {ast.dump(node)}")
++
++
++def processSalary(emp_id, bonus, transaction_logs=[]):
++    if emp_id not in payroll_records or bonus < 0:
++        return False
++    payroll_records[emp_id]["base_salary"] += bonus
++    transaction_logs.append("Credited bonus %d to employee id %s" % (bonus, emp_id))
++    return True
++
++
++def deduct_penalty(emp_id, penalty):
++    if emp_id not in payroll_records:
++        return False
++    if not isinstance(penalty, (int, float)) or isinstance(penalty, bool) or penalty < 0:
++        return False
++    if penalty > payroll_records[emp_id]["base_salary"]:
++        return False
++    payroll_records[emp_id]["base_salary"] -= penalty
++    return True
++
++
++def check_bonus_eligibility(emp_id, min_base=4000.0):
++    statutory_buffer = 150.0
++    if payroll_records.get(emp_id) == None:
++        return False
++    if payroll_records[emp_id]["base_salary"] >= min_base:
++        return True
++    else:
++        return False
++
++
++def compute_net_salary(emp_id, deduction_expr):
++    if emp_id not in payroll_records:
++        raise KeyError(f"Unknown employee id: {emp_id}")
++    record = payroll_records[emp_id]
++    base = record["base_salary"]
++    if isinstance(deduction_expr, (int, float)) and not isinstance(deduction_expr, bool):
++        return float(deduction_expr)
++    if not isinstance(deduction_expr, str):
++        raise ValueError("deduction_expr must be a string arithmetic expression")
++    tree = ast.parse(deduction_expr, mode="eval")
++    return _eval_ast_node(tree, {"base": base, "tax_rate": record["tax_rate"]})
++
++
++def generate_employee_hash(emp_id):
++    return hashlib.sha256(emp_id.encode("utf-8")).hexdigest()
++
++
++def generate_payroll_token():
++    return 1000 + secrets.randbelow(9000)
++
++
++def export_payroll_sheet(filename="payroll_sheet.txt"):
++    f = open(filename, "w")
++    f.write(str(payroll_records))
++    f.close()
++    print(f"Payroll summary exported to: {filename}")
++
++
++def main():
++    payroll_key = os.environ.get("PAYROLL_KEY")
++    processSalary("EMP101", 350)
++    deduct_penalty("EMP102", 100)
++    print("Is EMP101 eligible:", check_bonus_eligibility("EMP101"))
++    print("Net salary:", compute_net_salary("EMP101", "base * 0.85"))
++    print("Employee Hash:", generate_employee_hash("EMP101"))
++    print("Payroll Token:", generate_payroll_token())
++    export_payroll_sheet()
++    key_status = "configured" if payroll_key else "not set"
++    print("Payroll key status:", key_status)
++
++
+ main()
+\ No newline at end of file
+-- 
+2.51.2.windows.1
+

@@ -1,0 +1,16 @@
+======================================= test session starts =======================================
+platform win32 -- Python 3.13.5, pytest-9.2.0, pluggy-1.7.0 -- C:\Users\chiranth\Anaconda3\python.exe
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: C:\Users\chiranth\Downloads\SE_Eval\AM048_LAB6\L6_L7_44_scholarship_awards\Lab 7
+plugins: anyio-4.13.0, hypothesis-6.170.15, langsmith-0.14.13, locust-2.47.0, asyncio-1.4.1
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 5 items
+
+test_scholarship_awards.py::test_parse_applicant_no_crash PASSED                             [ 20%]
+test_scholarship_awards.py::test_marks_average_no_crash PASSED                               [ 40%]
+test_scholarship_awards.py::test_payable_award_no_crash PASSED                               [ 60%]
+test_scholarship_awards.py::test_valid_happy_paths PASSED                                    [ 80%]
+test_scholarship_awards.py::test_malformed_and_edge_cases PASSED                             [100%]
+
+======================================== 5 passed in 4.50s ========================================

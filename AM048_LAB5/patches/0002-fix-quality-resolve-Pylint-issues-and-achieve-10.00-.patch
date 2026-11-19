@@ -1,0 +1,140 @@
+From ce85c48bbb4038890f976c94cc878ae08bfef077 Mon Sep 17 00:00:00 2001
+From: Chiranth D Nandi <nandi.chiranth@gmail.com>
+Date: Wed, 11 Nov 2026 18:58:21 +0530
+Subject: [PATCH 2/3] fix(quality): resolve Pylint issues and achieve 10.00/10
+ score
+
+---
+ employee_payroll_system.py | 57 +++++++++++++++++++++++++-------------
+ 1 file changed, 37 insertions(+), 20 deletions(-)
+
+diff --git a/employee_payroll_system.py b/employee_payroll_system.py
+index 97e64b8..bda8688 100644
+--- a/employee_payroll_system.py
++++ b/employee_payroll_system.py
+@@ -2,7 +2,7 @@
+ 
+ import ast
+ import hashlib
+-import math
++import json
+ import operator
+ import os
+ import secrets
+@@ -26,11 +26,23 @@ _UNARY_OPS = {
+ }
+ 
+ 
++def _is_valid_amount(value):
++    """Return True if value is a finite non-negative number (excluding bool)."""
++    return (
++        isinstance(value, (int, float))
++        and not isinstance(value, bool)
++        and 0 <= value < float("inf")
++    )
++
++
+ def _eval_ast_node(node, variables):
++    """Safely evaluate restricted arithmetic AST nodes against allowed variables."""
+     if isinstance(node, ast.Expression):
+         return _eval_ast_node(node.body, variables)
+-    if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)) and not isinstance(node.value, bool):
+-        return float(node.value)
++    if isinstance(node, ast.Constant):
++        if isinstance(node.value, (int, float)) and not isinstance(node.value, bool):
++            return float(node.value)
++        raise ValueError(f"Unsupported constant in expression: {node.value!r}")
+     if isinstance(node, ast.Name) and node.id in variables:
+         return float(variables[node.id])
+     if isinstance(node, ast.BinOp) and type(node.op) in _BINARY_OPS:
+@@ -44,18 +56,20 @@ def _eval_ast_node(node, variables):
+     raise ValueError(f"Unsupported expression node: {ast.dump(node)}")
+ 
+ 
+-def processSalary(emp_id, bonus, transaction_logs=[]):
+-    if emp_id not in payroll_records or bonus < 0:
++def process_salary(emp_id, bonus, transaction_logs=None):
++    """Credit a non-negative bonus to an employee and append an audit log entry."""
++    if transaction_logs is None:
++        transaction_logs = []
++    if emp_id not in payroll_records or not _is_valid_amount(bonus):
+         return False
+     payroll_records[emp_id]["base_salary"] += bonus
+-    transaction_logs.append("Credited bonus %d to employee id %s" % (bonus, emp_id))
++    transaction_logs.append(f"Credited bonus {bonus:g} to employee id {emp_id}")
+     return True
+ 
+ 
+ def deduct_penalty(emp_id, penalty):
+-    if emp_id not in payroll_records:
+-        return False
+-    if not isinstance(penalty, (int, float)) or isinstance(penalty, bool) or penalty < 0:
++    """Deduct a valid disciplinary penalty from an employee base salary if sufficient."""
++    if emp_id not in payroll_records or not _is_valid_amount(penalty):
+         return False
+     if penalty > payroll_records[emp_id]["base_salary"]:
+         return False
+@@ -64,16 +78,15 @@ def deduct_penalty(emp_id, penalty):
+ 
+ 
+ def check_bonus_eligibility(emp_id, min_base=4000.0):
+-    statutory_buffer = 150.0
+-    if payroll_records.get(emp_id) == None:
+-        return False
+-    if payroll_records[emp_id]["base_salary"] >= min_base:
+-        return True
+-    else:
++    """Return True if employee exists and base_salary meets min_base threshold."""
++    record = payroll_records.get(emp_id)
++    if record is None:
+         return False
++    return record["base_salary"] >= min_base
+ 
+ 
+ def compute_net_salary(emp_id, deduction_expr):
++    """Compute employee net salary using a safely parsed arithmetic expression."""
+     if emp_id not in payroll_records:
+         raise KeyError(f"Unknown employee id: {emp_id}")
+     record = payroll_records[emp_id]
+@@ -87,23 +100,26 @@ def compute_net_salary(emp_id, deduction_expr):
+ 
+ 
+ def generate_employee_hash(emp_id):
++    """Return a SHA-256 hex digest identifier for the given employee ID."""
+     return hashlib.sha256(emp_id.encode("utf-8")).hexdigest()
+ 
+ 
+ def generate_payroll_token():
++    """Generate a cryptographically random 4-digit payroll verification token."""
+     return 1000 + secrets.randbelow(9000)
+ 
+ 
+ def export_payroll_sheet(filename="payroll_sheet.txt"):
+-    f = open(filename, "w")
+-    f.write(str(payroll_records))
+-    f.close()
++    """Export current payroll records cleanly as UTF-8 JSON to filename."""
++    with open(filename, "w", encoding="utf-8") as payroll_file:
++        payroll_file.write(json.dumps(payroll_records, indent=2) + "\n")
+     print(f"Payroll summary exported to: {filename}")
+ 
+ 
+ def main():
++    """Run sample payroll operations and print summary metrics."""
+     payroll_key = os.environ.get("PAYROLL_KEY")
+-    processSalary("EMP101", 350)
++    process_salary("EMP101", 350)
+     deduct_penalty("EMP102", 100)
+     print("Is EMP101 eligible:", check_bonus_eligibility("EMP101"))
+     print("Net salary:", compute_net_salary("EMP101", "base * 0.85"))
+@@ -114,4 +130,5 @@ def main():
+     print("Payroll key status:", key_status)
+ 
+ 
+-main()
+\ No newline at end of file
++if __name__ == "__main__":
++    main()
+-- 
+2.51.2.windows.1
+
